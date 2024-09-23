@@ -28,5 +28,41 @@
   </section>
   <section id="content">
   </section>
+  <script>
+ document.getElementById('send').onclick = function() {
+  const page = document.getElementById('page').value;
+  const type = document.getElementById('type').value;
+
+  fetch(page, {
+    method: 'GET',
+    headers: {
+      'Accept': type
+    }
+  })
+  .then(response => {
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    
+    const contentType = response.headers.get("Content-Type");
+    if (contentType.includes("application/json")) {
+      return response.json();
+    } else if (contentType.includes("text/xml")) {
+      return response.text().then((text) => {
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(text, "text/xml");
+        const message = xmlDoc.getElementsByTagName("message")[0].textContent;
+        return { message }; 
+      });
+    }
+    throw new Error("Unsupported content type");
+  })
+  .then(data => {
+    document.getElementById('content').innerHTML = `<p>${data.message}</p>`;
+  })
+  .catch(error => {
+    document.getElementById('content').innerHTML = `<p>Error: ${error.message}</p>`;
+  });
+};
+
+</script>
 </body>
 </html>
